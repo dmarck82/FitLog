@@ -1,0 +1,191 @@
+:root {
+    --df-verde: #198754;
+    --df-fundo: #f4f7f6;
+}
+
+body {
+    background: var(--df-fundo);
+    min-height: 100vh;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    letter-spacing: -.02em;
+}
+
+.card {
+    border: 0;
+    box-shadow: 0 .125rem .5rem rgba(27, 46, 39, .07);
+}
+
+.icone-resumo {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-items: center;
+    border-radius: .75rem;
+    background: rgba(25, 135, 84, .12);
+    color: var(--df-verde);
+    font-weight: 700;
+}
+
+.tabela-acoes {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.btn-icone {
+    align-items: center;
+    display: inline-flex;
+    height: 2rem;
+    justify-content: center;
+    padding: 0;
+    width: 2rem;
+}
+
+.campo-obrigatorio::after {
+    content: ' *';
+    color: var(--bs-danger);
+}
+
+
+.objetivo-opcao {
+    cursor: pointer;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.btn-check:checked + .objetivo-opcao {
+    border-color: var(--bs-success);
+    box-shadow: 0 0 0 .2rem rgba(25, 135, 84, .15);
+}
+
+.exercicio-realizado .table {
+    min-width: 48rem;
+}
+
+.exercicio-realizado .form-control-sm {
+    min-width: 5.5rem;
+}
+
+.select2-container {
+    min-width: 0;
+}
+
+.select2-container--default .select2-selection--single {
+    border: var(--bs-border-width) solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    min-height: calc(2.25rem + 2px);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--bs-body-color);
+    line-height: 2.25rem;
+    padding-left: .75rem;
+    padding-right: 2.25rem;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 100%;
+    right: .35rem;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--single,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+    outline: 0;
+}
+
+.select2-container--default.select2-container--disabled .select2-selection--single {
+    background-color: var(--bs-secondary-bg);
+}
+
+.select2-dropdown {
+    border-color: var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    z-index: 1080;
+}
+
+.select2-search--dropdown .select2-search__field {
+    border: var(--bs-border-width) solid var(--bs-border-color) !important;
+    border-radius: var(--bs-border-radius);
+    padding: .375rem .75rem;
+}
+
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: var(--df-verde);
+}
+
+.tabela-medicoes-transposta {
+    min-width: 100%;
+    width: max-content;
+}
+
+.tabela-medicoes-transposta th,
+.tabela-medicoes-transposta td {
+    padding: .9rem .75rem;
+    vertical-align: middle;
+}
+
+.tabela-medicoes-transposta td:not(.medicao-coluna-comparacao),
+.tabela-medicoes-transposta thead th:not(.medicao-coluna-rotulo):not(.medicao-coluna-comparacao) {
+    min-width: 9.5rem;
+}
+
+.tabela-medicoes-transposta .medicao-coluna-rotulo {
+    background-color: var(--bs-body-bg) !important;
+    box-shadow: .25rem 0 .35rem rgba(27, 46, 39, .05);
+    left: 0;
+    min-width: 11rem;
+    position: sticky;
+    text-align: left;
+    z-index: 2;
+}
+
+.tabela-medicoes-transposta thead .medicao-coluna-rotulo {
+    background-color: var(--bs-tertiary-bg) !important;
+    z-index: 4;
+}
+
+.tabela-medicoes-transposta .medicao-coluna-comparacao {
+    background-color: rgba(25, 135, 84, .045);
+    min-width: 12rem;
+}
+
+.medicao-acoes-data form {
+    margin: 0;
+}
+
+.variacao-medicao {
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+@media (max-width: 575.98px) {
+    .tabela-medicoes-transposta .medicao-coluna-rotulo {
+        min-width: 9rem;
+    }
+
+    .tabela-medicoes-transposta td:not(.medicao-coluna-comparacao),
+    .tabela-medicoes-transposta thead th:not(.medicao-coluna-rotulo):not(.medicao-coluna-comparacao) {
+        min-width: 8.5rem;
+    }
+}
+
+.painel-resumo-card .card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+.painel-resumo-card .icone-resumo {
+    flex: 0 0 auto;
+}
+
+.painel-progresso {
+    height: .5rem;
+}
+
+.painel-resumo-card .progress-bar {
+    transition: width .2s ease;
+}

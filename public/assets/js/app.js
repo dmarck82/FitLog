@@ -1,0 +1,324 @@
+$(function () {
+    $('[data-confirmar]').on('click', function (evento) {
+        if (!window.confirm($(this).data('confirmar'))) {
+            evento.preventDefault();
+        }
+    });
+
+    window.setTimeout(function () {
+        $('.alert-dismissible').each(function () {
+            bootstrap.Alert.getOrCreateInstance(this).close();
+        });
+    }, 5000);
+    const $blocoFeedback = $("#feedback-aplicacao-anterior");
+
+    if ($blocoFeedback.length) {
+        const $medicamento = $("#med_id");
+        const $campoFeedback = $("#feedback_aplicacao_anterior");
+        const $feedbackCarregado = $("#feedback_aplicacao_anterior_carregado");
+        const valorInicial = $campoFeedback.val();
+        let primeiraCarga = true;
+
+        function atualizarContadorFeedback() {
+            $("#feedback-contador").text(Array.from($campoFeedback.val()).length);
+        }
+
+        function ocultarFeedback() {
+            $blocoFeedback.addClass("d-none");
+            $feedbackCarregado.val("0");
+            $("#feedback-aplicacao-resumo").text("");
+        }
+
+        function carregarFeedbackAnterior() {
+            const medicamentoId = $medicamento.val();
+            ocultarFeedback();
+
+            if (!medicamentoId) {
+                $campoFeedback.val("");
+                atualizarContadorFeedback();
+                return;
+            }
+
+            $.getJSON($blocoFeedback.data("url"), { medicamento: medicamentoId })
+                .done(function (resposta) {
+                    if (!resposta.solicitar || !resposta.aplicacao) {
+                        $campoFeedback.val("");
+                        atualizarContadorFeedback();
+                        return;
+                    }
+
+                    $("#feedback-aplicacao-resumo").text(
+                        resposta.aplicacao.data + " — " + resposta.aplicacao.dose + " " + resposta.aplicacao.unidade
+                    );
+                    $campoFeedback.val(primeiraCarga && valorInicial ? valorInicial : (resposta.aplicacao.feedback || ""));
+                    $feedbackCarregado.val("1");
+                    $blocoFeedback.removeClass("d-none");
+                    atualizarContadorFeedback();
+                    primeiraCarga = false;
+                })
+                .fail(ocultarFeedback);
+        }
+
+        $campoFeedback.on("input", atualizarContadorFeedback);
+        $medicamento.on("change", function () {
+            primeiraCarga = false;
+            carregarFeedbackAnterior();
+        });
+        atualizarContadorFeedback();
+        carregarFeedbackAnterior();
+    }
+
+    const $blocoFeedbackConsumo = $('#feedback-consumo-anterior');
+
+    if ($blocoFeedbackConsumo.length) {
+        const $suplemento = $('#sup_id');
+        const $campoFeedback = $('#feedback_consumo_anterior');
+        const $feedbackCarregado = $('#feedback_consumo_anterior_carregado');
+        const valorInicial = $campoFeedback.val();
+        let primeiraCarga = true;
+
+        function atualizarContadorFeedbackConsumo() {
+            $('#feedback-consumo-contador').text(Array.from($campoFeedback.val()).length);
+        }
+
+        function ocultarFeedbackConsumo() {
+            $blocoFeedbackConsumo.addClass('d-none');
+            $feedbackCarregado.val('0');
+            $('#feedback-consumo-resumo').text('');
+        }
+
+        function carregarFeedbackConsumoAnterior() {
+            const suplementoId = $suplemento.val();
+            ocultarFeedbackConsumo();
+
+            if (!suplementoId) {
+                $campoFeedback.val('');
+                atualizarContadorFeedbackConsumo();
+                return;
+            }
+
+            $.getJSON($blocoFeedbackConsumo.data('url'), { suplemento: suplementoId })
+                .done(function (resposta) {
+                    if (!resposta.solicitar || !resposta.consumo) {
+                        $campoFeedback.val('');
+                        atualizarContadorFeedbackConsumo();
+                        return;
+                    }
+
+                    $('#feedback-consumo-resumo').text(
+                        resposta.consumo.data + ' — ' + resposta.consumo.dose + ' ' + resposta.consumo.unidade
+                    );
+                    $campoFeedback.val(primeiraCarga && valorInicial ? valorInicial : (resposta.consumo.feedback || ''));
+                    $feedbackCarregado.val('1');
+                    $blocoFeedbackConsumo.removeClass('d-none');
+                    atualizarContadorFeedbackConsumo();
+                    primeiraCarga = false;
+                })
+                .fail(ocultarFeedbackConsumo);
+        }
+
+        $campoFeedback.on('input', atualizarContadorFeedbackConsumo);
+        $suplemento.on('change', function () {
+            primeiraCarga = false;
+            carregarFeedbackConsumoAnterior();
+        });
+        atualizarContadorFeedbackConsumo();
+        carregarFeedbackConsumoAnterior();
+    }
+
+    const $itensAlimentares = $('#itens-alimentares');
+
+    if ($itensAlimentares.length) {
+        $('#adicionar-item-alimentar').on('click', function () {
+            const modelo = document.querySelector('#modelo-item-alimentar');
+            $itensAlimentares.append(modelo.content.cloneNode(true));
+            $itensAlimentares.find('.item-alimentar:last input[name="ita_alimento[]"]').trigger('focus');
+        });
+
+        $itensAlimentares.on('click', '.remover-item-alimentar', function () {
+            if ($itensAlimentares.find('.item-alimentar').length === 1) {
+                $(this).closest('.item-alimentar').find('input, textarea').val('');
+                $(this).closest('.item-alimentar').find('select').val('');
+                return;
+            }
+            $(this).closest('.item-alimentar').remove();
+        });
+    }
+
+    const $itensRealizados = $('#itens-realizados');
+
+    if ($itensRealizados.length) {
+        const $situacaoRefeicao = $('#ral_situacao');
+        const $blocoItensRealizados = $('#bloco-itens-realizados');
+
+        function atualizarItensRealizados() {
+            const naoRealizada = $situacaoRefeicao.val() === 'nao_realizada';
+            $blocoItensRealizados.toggleClass('opacity-50', naoRealizada);
+            $blocoItensRealizados.find('input, select, textarea, button').prop('disabled', naoRealizada);
+        }
+
+        $('#adicionar-item-realizado').on('click', function () {
+            const modelo = document.querySelector('#modelo-item-realizado');
+            $itensRealizados.append(modelo.content.cloneNode(true));
+            $itensRealizados.find('.item-realizado:last input[name="ira_alimento[]"]').trigger('focus');
+        });
+
+        $itensRealizados.on('click', '.remover-item-realizado', function () {
+            if ($itensRealizados.find('.item-realizado').length === 1) {
+                $(this).closest('.item-realizado').find('input, textarea').val('');
+                $(this).closest('.item-realizado').find('select').val('');
+                return;
+            }
+            $(this).closest('.item-realizado').remove();
+        });
+
+        $situacaoRefeicao.on('change', atualizarItensRealizados);
+        atualizarItensRealizados();
+    }
+
+    function inicializarSelect2Treino($elementos) {
+        if (!$.fn.select2) {
+            return;
+        }
+
+        $elementos.each(function () {
+            const $select = $(this);
+
+            if ($select.hasClass('select2-hidden-accessible')) {
+                return;
+            }
+
+            const $paiDropdown = $select.closest('.card');
+
+            $select.select2({
+                dropdownParent: $paiDropdown.length ? $paiDropdown : $('main'),
+                language: {
+                    noResults: function () {
+                        return 'Nenhum exercício encontrado';
+                    },
+                    searching: function () {
+                        return 'Pesquisando…';
+                    }
+                },
+                placeholder: $select.data('placeholder') || 'Pesquise e selecione',
+                width: '100%'
+            });
+        });
+    }
+
+    inicializarSelect2Treino($('.js-select2-treino'));
+
+    const $exerciciosPlanejados = $('#exercicios-planejados');
+
+    if ($exerciciosPlanejados.length) {
+        $('.adicionar-exercicio-planejado').on('click', function () {
+            const modelo = document.querySelector('#modelo-exercicio-planejado');
+            $exerciciosPlanejados.append(modelo.content.cloneNode(true));
+            const $novo = $exerciciosPlanejados.find('.exercicio-planejado:last');
+            const $select = $novo.find('.js-select2-treino');
+            inicializarSelect2Treino($select);
+            $select.select2('open');
+        });
+
+        $exerciciosPlanejados.on('click', '.remover-exercicio-planejado', function () {
+            if ($exerciciosPlanejados.find('.exercicio-planejado').length === 1) {
+                $(this).closest('.exercicio-planejado').find('input').val('');
+                $(this).closest('.exercicio-planejado').find('select').val(null).trigger('change');
+                return;
+            }
+
+            const $exercicio = $(this).closest('.exercicio-planejado');
+            $exercicio.find('.select2-hidden-accessible').select2('destroy');
+            $exercicio.remove();
+        });
+    }
+
+    const $exerciciosRealizadosTreino = $('#exercicios-realizados');
+
+    if ($exerciciosRealizadosTreino.length) {
+        const $situacaoTreino = $('#trr_situacao');
+        const $blocoExercicios = $('#bloco-exercicios-realizados');
+
+        function linhaSerie(indiceExercicio, indiceSerie) {
+            return '<tr class="serie-realizada">' +
+                '<td class="numero-serie">' + (indiceSerie + 1) + '</td>' +
+                '<td><input class="form-control form-control-sm" type="number" min="0" name="srr_repeticoes[' + indiceExercicio + '][' + indiceSerie + ']"></td>' +
+                '<td><input class="form-control form-control-sm" type="number" step="0.01" min="0" name="srr_carga_kg[' + indiceExercicio + '][' + indiceSerie + ']"></td>' +
+                '<td><input class="form-control form-control-sm" type="number" min="0" name="srr_duracao_segundos[' + indiceExercicio + '][' + indiceSerie + ']"></td>' +
+                '<td><input class="form-control form-control-sm" type="number" step="0.01" min="0" name="srr_distancia_km[' + indiceExercicio + '][' + indiceSerie + ']"></td>' +
+                '<td class="text-center"><input class="form-check-input" type="checkbox" name="srr_concluida[' + indiceExercicio + '][' + indiceSerie + ']" value="1" checked></td>' +
+                '<td><button class="btn btn-sm btn-outline-danger btn-icone remover-serie-realizada" type="button"><i class="bi bi-x-lg"></i></button></td>' +
+                '</tr>';
+        }
+
+        function normalizarIndicesTreino() {
+            $exerciciosRealizadosTreino.find('.exercicio-realizado').each(function (indiceExercicio) {
+                const $exercicio = $(this);
+                $exercicio.attr('data-indice', indiceExercicio);
+
+                $exercicio.find('.serie-realizada').each(function (indiceSerie) {
+                    $(this).find('.numero-serie').text(indiceSerie + 1);
+                    $(this).find('[name^="srr_"]').each(function () {
+                        const campo = this.name.match(/^(srr_[^\[]+)/);
+
+                        if (campo) {
+                            this.name = campo[1] + '[' + indiceExercicio + '][' + indiceSerie + ']';
+                        }
+                    });
+                });
+            });
+        }
+
+        function atualizarBlocoTreino() {
+            const naoRealizado = $situacaoTreino.val() === 'nao_realizado';
+            $blocoExercicios.toggleClass('opacity-50', naoRealizado);
+            $blocoExercicios.find('input, select, textarea, button').prop('disabled', naoRealizado);
+            $('.adicionar-exercicio-realizado').prop('disabled', naoRealizado);
+        }
+
+        $('.adicionar-exercicio-realizado').on('click', function () {
+            const indice = $exerciciosRealizadosTreino.find('.exercicio-realizado').length;
+            const html = $('#modelo-exercicio-realizado').html().replaceAll('__INDEX__', indice);
+            $exerciciosRealizadosTreino.append(html);
+            const $novo = $exerciciosRealizadosTreino.find('.exercicio-realizado:last');
+            $novo.find('.series-realizadas').append(linhaSerie(indice, 0));
+            inicializarSelect2Treino($novo.find('.js-select2-treino'));
+            $novo.find('.js-select2-treino').select2('open');
+        });
+
+        $exerciciosRealizadosTreino.on('change', '.exercicio-extra-select', function () {
+            const $opcao = $(this).find('option:selected');
+            const $exercicio = $(this).closest('.exercicio-realizado');
+            $exercicio.find('.exr-nome').val($opcao.data('nome') || '');
+            $exercicio.find('.exr-tipo').val($opcao.data('tipo') || 'outro');
+        });
+
+        $exerciciosRealizadosTreino.on('click', '.adicionar-serie-realizada', function () {
+            normalizarIndicesTreino();
+            const $exercicio = $(this).closest('.exercicio-realizado');
+            const indiceExercicio = Number($exercicio.attr('data-indice'));
+            const indiceSerie = $exercicio.find('.serie-realizada').length;
+            $exercicio.find('.series-realizadas').append(linhaSerie(indiceExercicio, indiceSerie));
+        });
+
+        $exerciciosRealizadosTreino.on('click', '.remover-serie-realizada', function () {
+            $(this).closest('.serie-realizada').remove();
+            normalizarIndicesTreino();
+        });
+
+        $exerciciosRealizadosTreino.on('click', '.remover-exercicio-realizado', function () {
+            const $exercicio = $(this).closest('.exercicio-realizado');
+            $exercicio.find('.select2-hidden-accessible').select2('destroy');
+            $exercicio.remove();
+            normalizarIndicesTreino();
+        });
+
+        $('#form-treino-realizado').on('submit', function () {
+            normalizarIndicesTreino();
+        });
+
+        $situacaoTreino.on('change', atualizarBlocoTreino);
+        atualizarBlocoTreino();
+    }
+
+});

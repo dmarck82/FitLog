@@ -1,0 +1,60 @@
+CREATE TABLE trr_treino_realizado (
+    trr_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    usu_id BIGINT UNSIGNED NOT NULL,
+    ptr_id BIGINT UNSIGNED NULL,
+    trp_id BIGINT UNSIGNED NULL,
+    trr_data DATE NOT NULL,
+    trr_hora_inicio TIME NULL,
+    trr_hora_fim TIME NULL,
+    trr_situacao VARCHAR(30) NOT NULL,
+    trr_treino_nome VARCHAR(100) NOT NULL,
+    trr_planejado_snapshot MEDIUMTEXT NOT NULL,
+    trr_esforco_percebido TINYINT UNSIGNED NULL,
+    trr_energia TINYINT UNSIGNED NULL,
+    trr_observacoes TEXT NULL,
+    trr_criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    trr_atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (trr_id),
+    UNIQUE KEY uk_trr_treino_data (trp_id, trr_data),
+    KEY idx_trr_usuario_data (usu_id, trr_data),
+    KEY idx_trr_plano_data (ptr_id, trr_data),
+    CONSTRAINT fk_trr_usuario FOREIGN KEY (usu_id) REFERENCES usu_usuario (usu_id),
+    CONSTRAINT fk_trr_plano FOREIGN KEY (ptr_id) REFERENCES ptr_plano_treino (ptr_id) ON DELETE SET NULL,
+    CONSTRAINT fk_trr_planejado FOREIGN KEY (trp_id) REFERENCES trp_treino_planejado (trp_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE exr_exercicio_realizado (
+    exr_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    trr_id BIGINT UNSIGNED NOT NULL,
+    exe_id BIGINT UNSIGNED NULL,
+    exp_id BIGINT UNSIGNED NULL,
+    exr_nome VARCHAR(120) NOT NULL,
+    exr_tipo VARCHAR(30) NOT NULL,
+    exr_observacoes VARCHAR(500) NULL,
+    exr_ordem SMALLINT UNSIGNED NOT NULL DEFAULT 0,
+    exr_criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    exr_atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (exr_id),
+    KEY idx_exr_treino_ordem (trr_id, exr_ordem),
+    KEY idx_exr_exercicio (exe_id),
+    CONSTRAINT fk_exr_treino FOREIGN KEY (trr_id) REFERENCES trr_treino_realizado (trr_id) ON DELETE CASCADE,
+    CONSTRAINT fk_exr_exercicio FOREIGN KEY (exe_id) REFERENCES exe_exercicio (exe_id) ON DELETE SET NULL,
+    CONSTRAINT fk_exr_planejado FOREIGN KEY (exp_id) REFERENCES exp_exercicio_planejado (exp_id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE srr_serie_realizada (
+    srr_id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    exr_id BIGINT UNSIGNED NOT NULL,
+    srr_numero SMALLINT UNSIGNED NOT NULL,
+    srr_repeticoes SMALLINT UNSIGNED NULL,
+    srr_carga_kg DECIMAL(10,2) NULL,
+    srr_duracao_segundos INT UNSIGNED NULL,
+    srr_distancia_km DECIMAL(10,2) NULL,
+    srr_concluida TINYINT(1) NOT NULL DEFAULT 1,
+    srr_observacoes VARCHAR(300) NULL,
+    srr_criado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    srr_atualizado_em DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (srr_id),
+    KEY idx_srr_exercicio_numero (exr_id, srr_numero),
+    CONSTRAINT fk_srr_exercicio FOREIGN KEY (exr_id) REFERENCES exr_exercicio_realizado (exr_id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
