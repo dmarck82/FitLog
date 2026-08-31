@@ -19,9 +19,9 @@
                         <input class="form-control" id="senha" name="senha" type="password" autocomplete="current-password" required>
                     </div>
                     <button class="btn btn-success w-100" type="submit">Entrar</button>
+                    <div class="d-flex justify-content-between mt-3 small"><a href="<?= escapar(url('/cadastro')) ?>">Criar conta</a><a href="<?= escapar(url('/esqueci-senha')) ?>">Esqueci minha senha</a></div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-

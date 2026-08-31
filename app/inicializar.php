@@ -29,6 +29,7 @@ if (PHP_SAPI !== 'cli' && session_status() !== PHP_SESSION_ACTIVE) {
 
 require_once RAIZ_PROJETO . '/app/banco.php';
 require_once RAIZ_PROJETO . '/app/funcoes.php';
+require_once RAIZ_PROJETO . '/app/email.php';
 require_once RAIZ_PROJETO . '/app/autenticacao.php';
 require_once RAIZ_PROJETO . '/app/objetivos.php';
 require_once RAIZ_PROJETO . '/app/treinos.php';
