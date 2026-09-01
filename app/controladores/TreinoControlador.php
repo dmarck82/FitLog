@@ -6,42 +6,32 @@ function exibir_treinos(): void
 {
     exigir_autenticacao();
     $data = trim((string) ($_GET['data'] ?? date('Y-m-d')));
-
-    if (!data_iso_valida($data)) {
-        flash('erro', 'Informe uma data válida para consultar os treinos.');
-        redirecionar('/treinos');
-    }
-
+    if (!data_iso_valida($data)) { flash('erro', 'Informe uma data válida para consultar os treinos.'); redirecionar('/treinos'); }
     $plano = buscar_plano_treino_por_data($data);
     $treinos = [];
+    $alternativas = [];
     $resumo = ['planejados' => 0, 'registrados' => 0, 'series' => 0, 'volume' => 0.0];
-
     if ($plano) {
-        $treinos = treinos_planejados_do_plano((int) $plano['ptr_id']);
+        $todos = treinos_planejados_do_plano((int) $plano['ptr_id']);
+        $recomendado = treino_recomendado_para_data($plano, $todos, $data);
         $registros = registros_treino_por_data((int) $plano['ptr_id'], $data);
-        $diaSemana = (int) (new DateTimeImmutable($data))->format('w');
-
-        foreach ($treinos as &$treino) {
-            $treino['registro'] = $registros[(int) $treino['trp_id']] ?? null;
-            $treino['eh_do_dia'] = $treino['trp_dia_semana'] !== null
-                && (int) $treino['trp_dia_semana'] === $diaSemana;
-
-            if ($treino['eh_do_dia']) {
-                $resumo['planejados']++;
-            }
-
-            if ($treino['registro']) {
-                $resumo['registrados']++;
-                $dados = resumo_treino_realizado($treino['registro'], $treino['registro']['exercicios']);
-                $resumo['series'] += $dados['series_concluidas'];
-                $resumo['volume'] += $dados['volume'];
-            }
+        if ($recomendado) {
+            $recomendado['registro'] = $registros[(int) $recomendado['trp_id']] ?? null;
+            $recomendado['eh_do_dia'] = $data === date('Y-m-d');
+            $recomendado['eh_previsao'] = $data > date('Y-m-d');
+            $treinos = [$recomendado];
+            $resumo['planejados'] = 1;
         }
-        unset($treino);
+        foreach ($todos as $treino) {
+            if (!$recomendado || (int) $treino['trp_id'] !== (int) $recomendado['trp_id']) { $alternativas[] = $treino; }
+        }
+        foreach ($registros as $registro) {
+            $resumo['registrados']++;
+            if ($registro['trr_situacao'] !== 'nao_realizado') { $dados = resumo_treino_realizado($registro, $registro['exercicios']); $resumo['series'] += $dados['series_concluidas']; $resumo['volume'] += $dados['volume']; }
+        }
     }
-
-    $podeRegistrar = $data <= date('Y-m-d');
-    renderizar('treinos/hoje', compact('plano', 'treinos', 'data', 'resumo', 'podeRegistrar'), 'Treinos');
+    $podeRegistrar = $data === date('Y-m-d');
+    renderizar('treinos/hoje', compact('plano', 'treinos', 'alternativas', 'data', 'resumo', 'podeRegistrar'), 'Treinos');
 }
 
 function listar_exercicios(): void
@@ -510,8 +500,8 @@ function formulario_treino_realizado(): void
             $exerciciosRealizados = preparar_exercicios_realizados($planejado);
         }
     } else {
-        if (!data_iso_valida($data) || $data > date('Y-m-d')) {
-            flash('erro', 'Informe uma data válida, igual ou anterior a hoje.');
+        if (!data_iso_valida($data) || $data !== date('Y-m-d')) {
+            flash('erro', 'O treino só pode ser iniciado na data de hoje.');
             redirecionar('/treinos');
         }
 
@@ -574,7 +564,7 @@ function salvar_treino_realizado(): void
         $erros[] = 'Selecione um treino planejado válido.';
     }
 
-    if (!data_iso_valida($data) || $data > date('Y-m-d')) {
+    if (!data_iso_valida($data) || $data !== date('Y-m-d')) {
         $erros[] = 'A data do treino deve ser válida e não pode estar no futuro.';
     }
 
@@ -1149,3 +1139,30 @@ function preparar_exercicios_realizados(array $planejado): array
     return $exercicios;
 }
 
+
+
+function treino_recomendado_para_data(array $plano, array $treinos, string $data): ?array
+{
+    if (!$treinos) { return null; }
+    $hoje = date('Y-m-d');
+    if ($data > $hoje) {
+        $consulta = banco()->prepare('SELECT trp_id, trr_data FROM trr_treino_realizado WHERE ptr_id = :plano AND usu_id = :usuario AND trr_data <= :hoje AND trr_situacao <> "nao_realizado" ORDER BY trr_data DESC, trr_id DESC LIMIT 1');
+        $consulta->execute(['plano' => $plano['ptr_id'], 'usuario' => usuario_atual()['id'], 'hoje' => $hoje]);
+        $ultimo = $consulta->fetch();
+        $indice = 0;
+        if ($ultimo) {
+            foreach ($treinos as $posicao => $treino) { if ((int) $treino['trp_id'] === (int) $ultimo['trp_id']) { $indice = ($posicao + 1) % count($treinos); break; } }
+            $dias = (int) ((new DateTimeImmutable($hoje))->diff(new DateTimeImmutable($data))->days);
+            $indice = ($indice + $dias - ($ultimo['trr_data'] === $hoje ? 1 : 0)) % count($treinos);
+        } else {
+            $indice = (int) ((new DateTimeImmutable($hoje))->diff(new DateTimeImmutable($data))->days) % count($treinos);
+        }
+        return $treinos[$indice];
+    }
+    $consulta = banco()->prepare('SELECT trp_id FROM trr_treino_realizado WHERE ptr_id = :plano AND usu_id = :usuario AND trr_data < :data AND trr_situacao <> "nao_realizado" ORDER BY trr_data DESC, trr_id DESC LIMIT 1');
+    $consulta->execute(['plano' => $plano['ptr_id'], 'usuario' => usuario_atual()['id'], 'data' => $data]);
+    $ultimo = $consulta->fetchColumn();
+    if ($ultimo === false) { return $treinos[0]; }
+    foreach ($treinos as $indice => $treino) { if ((int) $treino['trp_id'] === (int) $ultimo) { return $treinos[($indice + 1) % count($treinos)]; } }
+    return $treinos[0];
+}
